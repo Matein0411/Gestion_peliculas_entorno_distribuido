@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from app.routes.clientes_unificados import router as clientes_unificados_router
 from app.routes.empleados_vista_completa import router as empleados_vista_completa_router
 from app.routes.evidencia_replicacion import router as evidencia_replicacion_router
+from app.routes.replicacion_unidireccional import router as replicacion_unidireccional_router
 
 # Cargar variables de entorno
 load_dotenv()
@@ -43,6 +44,12 @@ app.include_router(
     tags=["Evidencia de Replicación"]
 )
 
+app.include_router(
+    replicacion_unidireccional_router,
+    prefix="/api/v1",
+    tags=["Replicación Unidireccional"]
+)
+
 @app.get("/")
 async def root():
     """Endpoint raíz de la API"""
@@ -52,7 +59,8 @@ async def root():
         "funcionalidades": {
             "clientes_unificados": "Fragmentación horizontal (Cuenca + Quito + Guayaquil)",
             "empleados_vista_completa": "Fragmentación vertical (Quito + Guayaquil)",
-            "replicacion_bidireccional": "Evidencia de replicación PostgreSQL"
+            "replicacion_bidireccional": "Evidencia de replicación PostgreSQL (promociones)",
+            "replicacion_unidireccional": "Replicación Guayaquil → Quito (películas)"
         },
         "databases": {
             "Cuenca": "Oracle",
