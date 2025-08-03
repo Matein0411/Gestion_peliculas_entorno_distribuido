@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.routes.clientes_unificados import router as clientes_unificados_router
-from app.routes.peliculas_completas import router as peliculas_completas_router
+from app.routes.empleados_vista_completa import router as empleados_vista_completa_router
 from app.routes.evidencia_replicacion import router as evidencia_replicacion_router
 
 # Cargar variables de entorno
@@ -10,8 +10,8 @@ load_dotenv()
 
 # Crear la aplicación FastAPI
 app = FastAPI(
-    title="API Proyecto IIB",
-    description="API para conectar bases de datos de Cuenca (Oracle), Quito (PostgreSQL) y Guayaquil (PostgreSQL)",
+    title="API Proyecto IIB - Multi-Database Ecuador",
+    description="API para consultas distribuidas: Clientes unificados (fragmentos horizontales), Empleados vista completa (fragmentos verticales), Replicación bidireccional",
     version="1.0.0"
 )
 
@@ -32,9 +32,9 @@ app.include_router(
 )
 
 app.include_router(
-    peliculas_completas_router,
+    empleados_vista_completa_router,
     prefix="/api/v1",
-    tags=["Películas Completas"]
+    tags=["Empleados Vista Completa"]
 )
 
 app.include_router(
@@ -49,9 +49,14 @@ async def root():
     return {
         "message": "API Multi-Database Ecuador",
         "version": "1.0.0",
+        "funcionalidades": {
+            "clientes_unificados": "Fragmentación horizontal (Cuenca + Quito + Guayaquil)",
+            "empleados_vista_completa": "Fragmentación vertical (Quito + Guayaquil)",
+            "replicacion_bidireccional": "Evidencia de replicación PostgreSQL"
+        },
         "databases": {
             "Cuenca": "Oracle",
-            "Quito": "PostgreSQL",
+            "Quito": "PostgreSQL", 
             "Guayaquil": "PostgreSQL"
         },
         "docs": "/docs"
