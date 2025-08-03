@@ -41,7 +41,7 @@ app.include_router(
 app.include_router(
     evidencia_replicacion_router,
     prefix="/api/v1",
-    tags=["Evidencia de Replicación"]
+    tags=["Replicación Bidireccional"]
 )
 
 app.include_router(
@@ -60,7 +60,10 @@ async def root():
             "clientes_unificados": "Fragmentación horizontal (Cuenca + Quito + Guayaquil)",
             "empleados_vista_completa": "Fragmentación vertical (Quito + Guayaquil)",
             "replicacion_bidireccional": "Evidencia de replicación PostgreSQL (promociones)",
-            "replicacion_unidireccional": "Replicación Guayaquil → Quito (películas)"
+            "replicacion_unidireccional": {
+                "guayaquil_quito": "PostgreSQL → PostgreSQL (películas)",
+                "quito_cuenca": "PostgreSQL → Oracle via trigger (películas)"
+            }
         },
         "databases": {
             "Cuenca": "Oracle",
