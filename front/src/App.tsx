@@ -5,6 +5,7 @@ import ResultsPanel from './components/ResultsPanel';
 import NodeStatus from './components/NodeStatus';
 import TablaEmpleados from './components/TablaEmpleados';
 import TablaPromociones from './components/TablaPromociones';
+import TablaClientes from './components/TablaClientes';
 
 
 import { 
@@ -41,7 +42,9 @@ function App() {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [promocionesAntes, setPromocionesAntes] = useState<any[]>([]);
   const [promocionesDespues, setPromocionesDespues] = useState<any[]>([]);
-  const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | null>(null);
+const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "clientes" | null>(null);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientesCargados, setClientesCargados] = useState(false);
 
   const [mostrarTablas, setMostrarTablas] = useState(false);
 
@@ -78,13 +81,30 @@ function App() {
   };
 
 // Fragmentación horizontal Datos
-    const handleFragmentacionHorizontal = () => {
+    const handleFragmentacionHorizontal = async () => {
+     if (!clientesCargados) {
       addOperation(
         'Fragmentación Horizontal',
         'Fragmentación de la tabla clientes por ciudad',
         'Clientes Quito → Nodo Quito\nClientes Guayaquil → Nodo Guayaquil\nClientes Cuenca → Nodo Cuenca'
       );
-    };
+      setClientesCargados(true);
+    }
+   setEmpleados([]);
+   setEmpleadosCargados(false); 
+
+   try {
+     const response = await fetch('http://localhost:8000/api/v1/clientes-unificados');
+     if (!response.ok) throw new Error('Error en la respuesta del servidor');
+     const data = await response.json();
+     setClientes(data);
+    }catch (error) {
+    console.error('❌ Error al obtener clientes:', error);
+    }
+    setVistaActual("clientes");
+    setMostrarTablas(false);
+    setEmpleados([]); // opcional si deseas limpiar empleados al cambiar de vista
+   };
 
 // Fragmentación vertical
       const handleFragmentacionVertical = async () => {
@@ -180,7 +200,7 @@ const handleReplicacion = async (origen: string, destino: string) => {
             />
             <DatabaseButton
               title="Empleados (Fragmentación Vertical)"
-              description="Distribución de atributos entre Guayaquil y Cuenca"
+              description="Distribución de atributos entre Guayaquil y Quito"
               icon={Columns}
               onClick={handleFragmentacionVertical}
               variant="fragmentation"
@@ -265,6 +285,11 @@ const handleReplicacion = async (origen: string, destino: string) => {
             <TablaPromociones titulo="DESPUÉS" promociones={promocionesDespues} />
           </>
         )}
+
+        {vistaActual === "clientes" && clientes.length > 0 && (
+          <TablaClientes clientes={clientes} />
+        )}
+
 
       </main>
       
