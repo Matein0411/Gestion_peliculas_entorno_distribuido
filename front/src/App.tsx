@@ -4,6 +4,8 @@ import DatabaseButton from './components/DatabaseButton';
 import ResultsPanel from './components/ResultsPanel';
 import NodeStatus from './components/NodeStatus';
 import TablaEmpleados from './components/TablaEmpleados';
+import TablaPromociones from './components/TablaPromociones';
+
 
 import { 
   Split, 
@@ -37,6 +39,12 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [empleadosCargados, setEmpleadosCargados] = useState(false);
   const [empleados, setEmpleados] = useState<any[]>([]);
+  const [promocionesAntes, setPromocionesAntes] = useState<any[]>([]);
+  const [promocionesDespues, setPromocionesDespues] = useState<any[]>([]);
+  const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | null>(null);
+
+  const [mostrarTablas, setMostrarTablas] = useState(false);
+
   const [nodes, setNodes] = useState<Node[]>([
     { id: 'quito', name: 'Quito', status: 'online', dbms: 'PostgreSQL 17', records: 1250 },
     { id: 'guayaquil', name: 'Guayaquil', status: 'online', dbms: 'PostgreSQL 17', records: 1250 },
@@ -97,37 +105,40 @@ function App() {
     } catch (error) {
       console.error('❌ Error al obtener empleados:', error);
     }
+
+    setVistaActual("empleados");
+    setMostrarTablas(false); // Oculta las promociones si estaban visibles
+
   };
 
 
 
-  const handleReplicacion = (origen: string, destino: string) => {
-    const sourceNode = nodes.find(n => n.name === origen);
-    const targetNode = nodes.find(n => n.name === destino);
-    
-    addOperation(
-      `Réplica ${origen} a ${destino}`,
-      `Replicando datos desde ${origen} (${sourceNode?.dbms}) hacia ${destino} (${targetNode?.dbms})`,
-      `Sincronizando tablas: PELICULAS, CLIENTES, ALQUILERES\nRegistros replicados: ${sourceNode?.records || 0}`
-    );
+const handleReplicacion = async (origen: string, destino: string) => {
+  try {
+    const cantidadRegistros = 1;
+    const response = await fetch(`http://localhost:8000/api/v1/replicacion-bidireccional?nodo_para_insertar=${origen}&cantidad_registros=${cantidadRegistros}`, {
+      method: "POST"
+    });
 
-    // Simular sincronización de nodos
-    setNodes(prev => prev.map(node => {
-      if (node.name === destino) {
-        return { ...node, status: 'syncing' as const };
-      }
-      return node;
-    }));
+    if (!response.ok) throw new Error("Fallo en la replicación");
 
-    setTimeout(() => {
-      setNodes(prev => prev.map(node => {
-        if (node.name === destino) {
-          return { ...node, status: 'online' as const, records: sourceNode?.records || node.records };
-        }
-        return node;
-      }));
-    }, 3000);
-  };
+    const resultado = await response.json();
+    const antes = resultado.evidencia_replicacion_bidireccional["1_estado_antes"];
+    const despues = resultado.evidencia_replicacion_bidireccional["3_estado_despues"];
+
+    // Aquí actualizas un estado para mostrar la tabla
+    setPromocionesAntes(antes[`promociones_${origen.toLowerCase()}`]);
+    setPromocionesDespues(despues[`promociones_${origen.toLowerCase()}`]);
+    setMostrarTablas(true);
+
+    setVistaActual("promociones");
+    setEmpleados([]); // Oculta empleados si estaban visibles
+
+  } catch (error) {
+    console.error("❌ Error en replicación:", error);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
@@ -243,9 +254,18 @@ function App() {
 
         {/* Panel de Resultados */}
         <ResultsPanel operations={operations} isVisible={showResults} />
-        {empleados.length > 0 && (
-  <TablaEmpleados empleados={empleados} />
-)}
+        
+        {vistaActual === "empleados" && empleados.length > 0 && (
+          <TablaEmpleados empleados={empleados} />
+        )}
+
+        {vistaActual === "promociones" && mostrarTablas && (
+          <>
+            <TablaPromociones titulo="ANTES" promociones={promocionesAntes} />
+            <TablaPromociones titulo="DESPUÉS" promociones={promocionesDespues} />
+          </>
+        )}
+
       </main>
       
     </div>
