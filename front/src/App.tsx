@@ -3,6 +3,8 @@ import Header from './components/Header';
 import DatabaseButton from './components/DatabaseButton';
 import ResultsPanel from './components/ResultsPanel';
 import NodeStatus from './components/NodeStatus';
+import TablaEmpleados from './components/TablaEmpleados';
+
 import { 
   Split, 
   Columns, 
@@ -29,8 +31,12 @@ interface Node {
 }
 
 function App() {
+  console.log("App cargada");
+
   const [operations, setOperations] = useState<Operation[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [empleadosCargados, setEmpleadosCargados] = useState(false);
+  const [empleados, setEmpleados] = useState<any[]>([]);
   const [nodes, setNodes] = useState<Node[]>([
     { id: 'quito', name: 'Quito', status: 'online', dbms: 'PostgreSQL 17', records: 1250 },
     { id: 'guayaquil', name: 'Guayaquil', status: 'online', dbms: 'PostgreSQL 17', records: 1250 },
@@ -63,21 +69,37 @@ function App() {
     }, 2000);
   };
 
-  const handleFragmentacionHorizontal = () => {
-    addOperation(
-      'Fragmentación Horizontal',
-      'Fragmentando tabla PELICULAS por año de lanzamiento',
-      'Fragmento 1: películas 2020-2025 → SO1\nFragmento 2: películas 2015-2019 → SO2\nFragmento 3: películas 2010-2014 → SO3'
+// Fragmentación horizontal Datos
+    const handleFragmentacionHorizontal = () => {
+      addOperation(
+        'Fragmentación Horizontal',
+        'Fragmentación de la tabla clientes por ciudad',
+        'Clientes Quito → Nodo Quito\nClientes Guayaquil → Nodo Guayaquil\nClientes Cuenca → Nodo Cuenca'
+      );
+    };
+
+// Fragmentación vertical
+      const handleFragmentacionVertical = async () => {
+    if(!empleadosCargados){
+      addOperation(
+      'Fragmentación Vertical',
+      'Fragmentación de la tabla empleados por atributos',
+      'Guayaquil: id, nombre, apellido, cargo \nCuenca: ciudad, salario, fecha contratación, contacto emergencia'
     );
+    setEmpleadosCargados(true);
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/empleados-vista-completa');
+      if (!response.ok) throw new Error('Error en la respuesta del servidor');
+      const data = await response.json();
+      setEmpleados(data);
+    } catch (error) {
+      console.error('❌ Error al obtener empleados:', error);
+    }
   };
 
-  const handleFragmentacionVertical = () => {
-    addOperation(
-      'Fragmentación Vertical',
-      'Fragmentando tabla CLIENTES por atributos',
-      'Fragmento 1: id, nombre, email → SO1\nFragmento 2: id, telefono, direccion → SO2\nFragmento 3: id, fecha_registro, preferencias → SO3'
-    );
-  };
+
 
   const handleReplicacion = (origen: string, destino: string) => {
     const sourceNode = nodes.find(n => n.name === origen);
@@ -137,23 +159,24 @@ function App() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* botones fragmentación Horizontal y Vertical */}
             <DatabaseButton
-              title="Fragmentación Horizontal"
-              description="Divide las tablas por filas según criterios específicos (ej: año de película)"
+              title="Clientes (Fragmentación Horizontal)"
+              description="Distribución por ciudad: Quito, Guayaquil y Cuenca"
               icon={Split}
               onClick={handleFragmentacionHorizontal}
               variant="fragmentation"
             />
-            
             <DatabaseButton
-              title="Fragmentación Vertical"
-              description="Divide las tablas por columnas distribuyendo atributos entre nodos"
+              title="Empleados (Fragmentación Vertical)"
+              description="Distribución de atributos entre Guayaquil y Cuenca"
               icon={Columns}
               onClick={handleFragmentacionVertical}
               variant="fragmentation"
             />
           </div>
         </div>
+        
 
         {/* Replicación Section */}
         <div className="mb-12">
@@ -161,61 +184,70 @@ function App() {
             <Copy className="h-6 w-6 text-blue-600" />
             <h3 className="text-2xl font-bold text-gray-900">Replicación de Datos</h3>
           </div>
-          
+
+          {/* Nombre de los botones */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* Promociones: Bidireccional */}
             <DatabaseButton
-              title="Réplica SO1 a SO2"
-              description="Replica datos desde PostgreSQL SO1 hacia PostgreSQL SO2"
+              title="Promociones: Guayaquil → Quito"
+              description="Replicación bidireccional de tabla promociones: Guayaquil a Quito"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO1', 'SO2')}
+              onClick={() => handleReplicacion('Guayaquil', 'Quito')}
               variant="replication"
             />
-            
+
             <DatabaseButton
-              title="Réplica SO1 a SO3"
-              description="Replica datos desde PostgreSQL SO1 hacia Oracle SO3"
+              title="Promociones: Quito → Guayaquil"
+              description="Replicación bidireccional de tabla promociones: Quito a Guayaquil"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO1', 'SO3')}
+              onClick={() => handleReplicacion('Quito', 'Guayaquil')}
               variant="replication"
             />
-            
+
+            {/* Catálogo: Cuenca → Quito / Guayaquil */}
             <DatabaseButton
-              title="Réplica SO2 a SO1"
-              description="Replica datos desde PostgreSQL SO2 hacia PostgreSQL SO1"
+              title="Catálogo: Cuenca → Quito"
+              description="Replicación unidireccional de tabla catálogo: Cuenca a Quito"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO2', 'SO1')}
+              onClick={() => handleReplicacion('Cuenca', 'Quito')}
               variant="replication"
             />
-            
+
             <DatabaseButton
-              title="Réplica SO2 a SO3"
-              description="Replica datos desde PostgreSQL SO2 hacia Oracle SO3"
+              title="Catálogo: Cuenca → Guayaquil"
+              description="Replicación unidireccional de tabla catálogo: Cuenca a Guayaquil"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO2', 'SO3')}
+              onClick={() => handleReplicacion('Cuenca', 'Guayaquil')}
               variant="replication"
             />
-            
+
+            {/* Alquiler: Quito → Cuenca / Guayaquil → Cuenca */}
             <DatabaseButton
-              title="Réplica SO3 a SO1"
-              description="Replica datos desde Oracle SO3 hacia PostgreSQL SO1"
+              title="Alquiler: Quito → Cuenca"
+              description="Replicación unidireccional de tabla alquiler: Quito a Cuenca"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO3', 'SO1')}
+              onClick={() => handleReplicacion('Quito', 'Cuenca')}
               variant="replication"
             />
-            
+
             <DatabaseButton
-              title="Réplica SO3 a SO2"
-              description="Replica datos desde Oracle SO3 hacia PostgreSQL SO2"
+              title="Alquiler: Guayaquil → Cuenca"
+              description="Replicación unidireccional de tabla alquiler: Guayaquil a Cuenca"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('SO3', 'SO2')}
+              onClick={() => handleReplicacion('Guayaquil', 'Cuenca')}
               variant="replication"
             />
+
           </div>
         </div>
 
         {/* Panel de Resultados */}
         <ResultsPanel operations={operations} isVisible={showResults} />
+        {empleados.length > 0 && (
+  <TablaEmpleados empleados={empleados} />
+)}
       </main>
+      
     </div>
   );
 }
