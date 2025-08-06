@@ -17,7 +17,7 @@ interface Props {
 const TablaPromociones: React.FC<Props> = ({ titulo, promociones }) => {
   return (
      <div className="overflow-x-auto mt-6 shadow-lg rounded-lg border border-gray-200 bg-white">
-        {/* <h3 className="text-xl font-bold mb-4 text-gray-800">{titulo}</h3> */}
+        <h3 className="text-xl font-bold mb-4 text-gray-800">{titulo}</h3> 
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-blue-100 text-blue-800 font-semibold">
           <tr>

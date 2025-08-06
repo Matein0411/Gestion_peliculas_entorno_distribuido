@@ -42,9 +42,12 @@ function App() {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [promocionesAntes, setPromocionesAntes] = useState<any[]>([]);
   const [promocionesDespues, setPromocionesDespues] = useState<any[]>([]);
-const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "clientes" | null>(null);
+  const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "clientes" | null>(null);
   const [clientes, setClientes] = useState<any[]>([]);
   const [clientesCargados, setClientesCargados] = useState(false);
+  const [peliculasAntes, setPeliculasAntes] = useState<any[]>([]);
+  const [peliculasDespues, setPeliculasDespues] = useState<any[]>([]);
+
 
   const [mostrarTablas, setMostrarTablas] = useState(false);
 
@@ -112,7 +115,7 @@ const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "cl
       addOperation(
       'Fragmentación Vertical',
       'Fragmentación de la tabla empleados por atributos',
-      'Guayaquil: id, nombre, apellido, cargo \nCuenca: ciudad, salario, fecha contratación, contacto emergencia'
+      'Guayaquil: id, nombre, apellido, cargo \Quito: ciudad, salario, fecha contratación, contacto emergencia'
     );
     setEmpleadosCargados(true);
     }
@@ -146,18 +149,31 @@ const handleReplicacion = async (origen: string, destino: string) => {
     const antes = resultado.evidencia_replicacion_bidireccional["1_estado_antes"];
     const despues = resultado.evidencia_replicacion_bidireccional["3_estado_despues"];
 
-    // Aquí actualizas un estado para mostrar la tabla
     setPromocionesAntes(antes[`promociones_${origen.toLowerCase()}`]);
     setPromocionesDespues(despues[`promociones_${origen.toLowerCase()}`]);
     setMostrarTablas(true);
-
     setVistaActual("promociones");
-    setEmpleados([]); // Oculta empleados si estaban visibles
+    setEmpleados([]);
+
+    // ✅ Lógica para mostrar si es bidireccional o unidireccional
+    const esBidireccional = 
+      (origen === "Guayaquil" && destino === "Quito") || 
+      (origen === "Quito" && destino === "Guayaquil");
+
+    const tipo = esBidireccional ? "Replicación Bidireccional" : "Replicación Unidireccional";
+    const descripcion = esBidireccional 
+      ? `Replicación de promociones entre ${origen} y ${destino}` 
+      : `Replicación de promociones desde ${origen} hacia ${destino}`;
+
+    const detalles = `Nodo origen: ${origen} → Nodo destino: ${destino}`;
+
+    addOperation(tipo, descripcion, detalles);
 
   } catch (error) {
     console.error("❌ Error en replicación:", error);
   }
 };
+
 
 
   return (
@@ -237,16 +253,16 @@ const handleReplicacion = async (origen: string, destino: string) => {
 
             {/* Catálogo: Cuenca → Quito / Guayaquil */}
             <DatabaseButton
-              title="Catálogo: Cuenca → Quito"
-              description="Replicación unidireccional de tabla catálogo: Cuenca a Quito"
+              title="Alquiler: Cuenca → Quito"
+              description="Replicación unidireccional de tabla Alquiler: Cuenca a Quito"
               icon={ArrowRight}
               onClick={() => handleReplicacion('Cuenca', 'Quito')}
               variant="replication"
             />
 
             <DatabaseButton
-              title="Catálogo: Cuenca → Guayaquil"
-              description="Replicación unidireccional de tabla catálogo: Cuenca a Guayaquil"
+              title="Alquiler: Cuenca → Guayaquil"
+              description="Replicación unidireccional de tabla Alquiler: Cuenca a Guayaquil"
               icon={ArrowRight}
               onClick={() => handleReplicacion('Cuenca', 'Guayaquil')}
               variant="replication"
@@ -254,16 +270,16 @@ const handleReplicacion = async (origen: string, destino: string) => {
 
             {/* Alquiler: Quito → Cuenca / Guayaquil → Cuenca */}
             <DatabaseButton
-              title="Alquiler: Quito → Cuenca"
-              description="Replicación unidireccional de tabla alquiler: Quito a Cuenca"
+              title="Peliculas_Catalogo: Quito → Cuenca"
+              description="Replicación unidireccional de tabla Peliculas_Catalogo: Quito a Cuenca"
               icon={ArrowRight}
               onClick={() => handleReplicacion('Quito', 'Cuenca')}
               variant="replication"
             />
 
             <DatabaseButton
-              title="Alquiler: Guayaquil → Cuenca"
-              description="Replicación unidireccional de tabla alquiler: Guayaquil a Cuenca"
+              title="Peliculas_Catalogo: Guayaquil → Cuenca"
+              description="Replicación unidireccional de tabla Peliculas_Catalogo: Guayaquil a Cuenca"
               icon={ArrowRight}
               onClick={() => handleReplicacion('Guayaquil', 'Cuenca')}
               variant="replication"
