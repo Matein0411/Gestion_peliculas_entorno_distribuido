@@ -45,11 +45,11 @@ class ReplicacionQuitoCuencaService:
             logger.error(f"   ✗ Tipo de error: {type(e).__name__}")
             return []
     
-    def consultar_peliculas_cuenca(self) -> List[Dict]:
+    async def consultar_peliculas_cuenca(self) -> List[Dict]:
         """Consulta películas en Cuenca (Oracle)"""
         logger.info("   → Consultando Cuenca (Oracle)...")
         try:
-            with self.cuenca_conn.get_connection() as connection:
+                connection = self.cuenca_conn.get_connection().__enter__()
                 logger.info("   → Creando cursor...")
                 cursor = connection.cursor()
                 logger.info("   → Ejecutando query SELECT...")
@@ -154,7 +154,7 @@ class ReplicacionQuitoCuencaService:
             logger.info(f"   ✓ Quito inicial: {len(peliculas_quito_inicial)} películas")
             
             logger.info("2. Consultando estado inicial en Cuenca...")
-            peliculas_cuenca_inicial = self.consultar_peliculas_cuenca()
+            peliculas_cuenca_inicial = await self.consultar_peliculas_cuenca()
             logger.info(f"   ✓ Cuenca inicial: {len(peliculas_cuenca_inicial)} películas")
             
             # Insertar en Quito (origen)
@@ -173,7 +173,7 @@ class ReplicacionQuitoCuencaService:
             logger.info(f"   ✓ Quito final: {len(peliculas_quito_final)} películas")
             
             logger.info("6. Consultando estado final en Cuenca...")
-            peliculas_cuenca_final = self.consultar_peliculas_cuenca()
+            peliculas_cuenca_final = await self.consultar_peliculas_cuenca()
             logger.info(f"   ✓ Cuenca final: {len(peliculas_cuenca_final)} películas")
             
             logger.info("=== EVIDENCIA COMPLETADA EXITOSAMENTE ===")

@@ -68,7 +68,7 @@ async def replicacion_guayaquil_cuenca(
         
         # Estado inicial
         guayaquil_antes = await service_gye.consultar_peliculas_nodo(2)  # DB2 = Guayaquil
-        cuenca_antes = service_cuenca.consultar_peliculas_cuenca()
+        cuenca_antes = await service_cuenca.consultar_peliculas_cuenca()
         
         # Insertar en Guayaquil
         peliculas_insertadas = await service_gye.insertar_peliculas_guayaquil(cantidad)
@@ -79,7 +79,7 @@ async def replicacion_guayaquil_cuenca(
         
         # Estado final
         guayaquil_despues = await service_gye.consultar_peliculas_nodo(2)  # DB2 = Guayaquil
-        cuenca_despues = service_cuenca.consultar_peliculas_cuenca()
+        cuenca_despues = await service_cuenca.consultar_peliculas_cuenca()
         
         return {
             "success": True,

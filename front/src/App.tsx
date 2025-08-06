@@ -6,6 +6,7 @@ import NodeStatus from './components/NodeStatus';
 import TablaEmpleados from './components/TablaEmpleados';
 import TablaPromociones from './components/TablaPromociones';
 import TablaClientes from './components/TablaClientes';
+import TablaPeliculas from './components/TablaPeliculas';
 
 
 import { 
@@ -42,11 +43,11 @@ function App() {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [promocionesAntes, setPromocionesAntes] = useState<any[]>([]);
   const [promocionesDespues, setPromocionesDespues] = useState<any[]>([]);
-  const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "clientes" | null>(null);
+  const [vistaActual, setVistaActual] = useState<"empleados" | "promociones" | "clientes" | "peliculas" | null>(null);
   const [clientes, setClientes] = useState<any[]>([]);
   const [clientesCargados, setClientesCargados] = useState(false);
-  const [peliculasAntes, setPeliculasAntes] = useState<any[]>([]);
-  const [peliculasDespues, setPeliculasDespues] = useState<any[]>([]);
+  const [peliculasCuencaAntes, setPeliculasCuencaAntes] = useState<any[]>([]);
+  const [peliculasCuencaDespues, setPeliculasCuencaDespues] = useState<any[]>([]);
 
 
   const [mostrarTablas, setMostrarTablas] = useState(false);
@@ -174,6 +175,69 @@ const handleReplicacion = async (origen: string, destino: string) => {
   }
 };
 
+//peliculas replicadas quito cuenca
+const handleReplicacionUnidireccionalQuitoCuenca = async () => {
+  try {
+    const cantidad = 1; // siempre será 1 como pediste
+    const response = await fetch(`http://localhost:8000/api/v1/replicacion-unidireccional/quito-cuenca?cantidad=${cantidad}`, {
+      method: 'POST'
+    });
+
+    if (!response.ok) throw new Error("Error en la replicación Quito → Cuenca");
+
+    const data = await response.json();
+
+    // Extraer estado antes y después para Cuenca
+    const antes = data.tablas_antes.cuenca_peliculas;
+    const despues = data.tablas_despues.cuenca_peliculas;
+
+    setPeliculasCuencaAntes(antes);
+    setPeliculasCuencaDespues(despues);
+    setVistaActual("peliculas");
+    setMostrarTablas(true);
+
+    addOperation(
+      "Replicación Unidireccional",
+      "Replicación de películas de Quito a Cuenca",
+      "Nodo origen: Quito → Nodo destino: Cuenca"
+    );
+  } catch (error) {
+    console.error("❌ Error replicando Quito → Cuenca:", error);
+  }
+};
+
+// replicación unidireccional Guayaquil → Cuenca
+const handleReplicacionUnidireccionalGuayaquilCuenca = async () => {
+  try {
+    const cantidad = 1; // igual que en el otro caso
+    const response = await fetch(`http://localhost:8000/api/v1/replicacion-unidireccional/guayaquil-cuenca?cantidad=${cantidad}`, {
+      method: 'POST'
+    });
+
+    if (!response.ok) throw new Error("Error en la replicación Guayaquil → Cuenca");
+
+    const data = await response.json();
+
+    // Extraer estado antes y después para Cuenca
+    const antes = data.tablas_antes.cuenca_peliculas;
+    const despues = data.tablas_despues.cuenca_peliculas;
+
+    setPeliculasCuencaAntes(antes);
+    setPeliculasCuencaDespues(despues);
+    setVistaActual("peliculas");
+    setMostrarTablas(true);
+
+    addOperation(
+      "Replicación Unidireccional",
+      "Replicación de películas de Guayaquil a Cuenca",
+      "Nodo origen: Guayaquil → Nodo destino: Cuenca"
+    );
+  } catch (error) {
+    console.error("❌ Error replicando Guayaquil → Cuenca:", error);
+  }
+};
+
+
 
 
   return (
@@ -273,17 +337,20 @@ const handleReplicacion = async (origen: string, destino: string) => {
               title="Peliculas_Catalogo: Quito → Cuenca"
               description="Replicación unidireccional de tabla Peliculas_Catalogo: Quito a Cuenca"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('Quito', 'Cuenca')}
+              onClick={handleReplicacionUnidireccionalQuitoCuenca} // ✅ CORRECTO
               variant="replication"
             />
+
+
 
             <DatabaseButton
               title="Peliculas_Catalogo: Guayaquil → Cuenca"
               description="Replicación unidireccional de tabla Peliculas_Catalogo: Guayaquil a Cuenca"
               icon={ArrowRight}
-              onClick={() => handleReplicacion('Guayaquil', 'Cuenca')}
+              onClick={handleReplicacionUnidireccionalGuayaquilCuenca}
               variant="replication"
             />
+
 
           </div>
         </div>
@@ -304,6 +371,13 @@ const handleReplicacion = async (origen: string, destino: string) => {
 
         {vistaActual === "clientes" && clientes.length > 0 && (
           <TablaClientes clientes={clientes} />
+        )}
+
+        {vistaActual === "peliculas" && mostrarTablas && (
+        <>
+          <TablaPeliculas titulo="ANTES (Cuenca)" peliculas={peliculasCuencaAntes} />
+          <TablaPeliculas titulo="DESPUÉS (Cuenca)" peliculas={peliculasCuencaDespues} />
+        </>
         )}
 
 
